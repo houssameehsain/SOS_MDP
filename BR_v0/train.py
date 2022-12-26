@@ -1,5 +1,4 @@
 from envs import BR_v0, BR_v1
-from utils.log import log_plot_data
 
 from stable_baselines3 import A2C, PPO, DQN
 from stable_baselines3.common.monitor import Monitor

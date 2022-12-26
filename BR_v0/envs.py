@@ -3,6 +3,7 @@ import numpy as np
 from math import floor
 import cv2
 import gym
+from utils.log import log_plot_data
 
 
 # Beady Ring Env
@@ -76,6 +77,10 @@ class BR_v0(gym.Env):
         self.eps = 0
         self.cumul_rwd = 0
 
+        self.plot_rewards = []
+        self.plot_returns = []
+        self.plot_eps_lengths = []
+
         self.isopen = True
 
     def step(self, _cell_state):
@@ -133,6 +138,13 @@ class BR_v0(gym.Env):
         if self.eps == 1 or self.eps % self.save_img_freq == 0:
             frame = self.make_screen()
             cv2.imwrite(self.path + f"BR_v0_eps-{self.eps}_step-{self.stp}.png", frame)
+
+        # log rewards 
+        self.plot_rewards.append(reward)
+        # log returns and episode lengths
+        if done:
+            self.plot_returns.append(self.cumul_rwd)
+            self.plot_eps_lengths.append(self.stp)
         
         return self.observation, reward, done, {}
 
@@ -218,7 +230,10 @@ class BR_v0(gym.Env):
         return frame
     
     def close(self): 
+        log_plot_data(
+            self.plot_rewards,
+            self.plot_returns,
+            self.plot_eps_lengths,
+            self.run
+        )
         self.isopen = False
-
-
-
