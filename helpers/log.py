@@ -4,7 +4,7 @@ import numpy as np
 
 def log_plot_data(rewards, returns, eps_lengths, run):
 
-    path = f"/images/{run.id}/"
+    path = f"plot_data/{run.id}/"
     if not os.path.exists(path):
         os.makedirs(path)
 
@@ -27,5 +27,3 @@ def log_plot_data(rewards, returns, eps_lengths, run):
 
 def log_img():
     raise NotImplementedError
-
-

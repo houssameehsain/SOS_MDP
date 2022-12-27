@@ -1,4 +1,4 @@
-from envs import BR_v0, BR_v1
+from envs import BR_v0
 
 from stable_baselines3 import A2C, PPO, DQN
 from stable_baselines3.common.monitor import Monitor
@@ -16,16 +16,16 @@ if __name__ == '__main__':
     config = {
         "rl_alg": "A2C",
         "policy_type": "MlpPolicy",
-        "total_timesteps": 10000000,
+        "total_timesteps": 1000,
         "vid_name_prefix": "BR_DRL-train",
-        "record_video_freq": 200000,
-        "video_length": 1500,
+        "record_video_freq": 100,
+        "video_length": 10,
         "model_save_freq": 500,
     }
 
     run = wandb.init(
         entity='hehsain',  # place with wandb entity here
-        project="BeadyRing_DRL",  # place with wandb project name here
+        project="sos-mdp",  # place with wandb project name here
         config=config,
         sync_tensorboard=True,  # auto-upload sb3's tensorboard metrics
         monitor_gym=True,
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     )
 
     def make_env():
-        env = BR_v0(run)  # select a gym env from envs.py
+        env = BR_v0(run, save_img_freq=100, local=True)  # select a gym env from envs.py
         # check_env(env)  # check if the env follows the gym interface
         env = Monitor(env)  # record stats
         return env
@@ -65,5 +65,6 @@ if __name__ == '__main__':
     #         obs = env.reset()
     #         print("Return = ", cum_rwd)
     #         cum_rwd = 0
+
     env.close()
     run.finish()

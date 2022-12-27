@@ -3,7 +3,7 @@ import numpy as np
 from math import floor
 import cv2
 import gym
-from utils.log import log_plot_data
+from helpers.log import log_plot_data
 
 
 # Beady Ring Env
@@ -56,7 +56,7 @@ class BR_v0(gym.Env):
         self.state = np.full([self.max_world_row_len, self.max_world_row_len], self._carrier_color)
 
         # initial observation
-        self.observation = self.get_obs()   ############ CHECK THIS !!!!!!!!!!!!!!!!!!
+        self.observation = self.get_obs() 
 
         self.action_space = gym.spaces.Discrete(2)
         if self.local:
@@ -69,7 +69,7 @@ class BR_v0(gym.Env):
                                                     dtype=np.uint8) 
         
         self.run = run
-        self.path = f"/images/{self.run.id}/"
+        self.path = f"images/{self.run.id}/"
         if not os.path.exists(self.path):
             os.makedirs(self.path)
         
