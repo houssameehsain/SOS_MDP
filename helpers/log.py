@@ -2,16 +2,11 @@ import os
 import numpy as np
 
 
-def log_plot_data(rewards, returns, eps_lengths, run):
+def log_plot_data(returns, eps_lengths, run):
 
     path = f"plot_data/{run.id}/"
     if not os.path.exists(path):
         os.makedirs(path)
-
-    # log rewards
-    arr = np.asarray(rewards)
-    file = path + "rewards.npy"
-    np.save(file, arr)
 
     # log returns
     arr = np.asarray(returns)
