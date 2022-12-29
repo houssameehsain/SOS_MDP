@@ -3,6 +3,8 @@ import cv2
 import gym
 import numpy as np
 from math import floor
+from statistics import mean
+
 import networkx as nx
 from networkx.algorithms.approximation import node_connectivity
 from networkx.algorithms.efficiency_measures import global_efficiency
@@ -336,7 +338,7 @@ class BR_v1(gym.Env):
         
         # update street graph
         if _cell_state == 1:
-            self.graph.add_node(self.cell) # Add street node to graph
+            self.graph.add_node(tuple(self.cell)) # Add street node to graph
 
             for item in adjacent:
                 # Add adjacent cells only if they're street cells
@@ -346,22 +348,24 @@ class BR_v1(gym.Env):
 
                 _adj_state = self.state[item[0]+self.pad, item[1]+self.pad]
                 # Add graph edge if adjacent cell is a street cell 
-                if _adj_state == 1:
-                    self.graph.add_edge(self.cell, item)  # Add edge to street graph
+                if round(_adj_state/255) == 1:
+                    self.graph.add_edge(tuple(self.cell), tuple(item))  # Add edge to street graph
 
         # reward
         reward = 0
 
-        reward += node_connectivity(self.graph)  # connectivity reward
-        reward += global_efficiency(self.graph)  # efficiency reward 
-        reward += closeness_centrality(self.graph)  # closeness reward
-        reward += betweenness_centrality(self.graph)  # betweenness reward
+        # print(f'action {_cell_state}')
+        if not nx.is_empty(self.graph): 
+            reward += node_connectivity(self.graph)  # connectivity reward
+            reward += global_efficiency(self.graph)  # efficiency reward 
+            reward += mean(list(closeness_centrality(self.graph).values()))  # closeness reward
+            reward += mean(list(betweenness_centrality(self.graph).values()))  # betweenness reward
 
         if _cell_state == 0: # house cell
             reward += 1/(self._max_row_len**2)  # density 
 
         self.cumul_rwd += reward  # update episode cumulative reward
-        
+
         # done
         done = len(self.adj_cells) == 0
 
@@ -481,3 +485,4 @@ class BR_v1(gym.Env):
             self.run
         )
         self.isopen = False
+

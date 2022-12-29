@@ -1,0 +1,47 @@
+Using cpu device
+Logging to runs/39rhzplv\A2C_1
+Saving video to D:\RLinGUD\SOS_MDP\videos\39rhzplv\BR_DRL-train-step-0-to-step-10.mp4
+Saving video to D:\RLinGUD\SOS_MDP\videos\39rhzplv\BR_DRL-train-step-100-to-step-110.mp4
+Saving video to D:\RLinGUD\SOS_MDP\videos\39rhzplv\BR_DRL-train-step-200-to-step-210.mp4
+Saving video to D:\RLinGUD\SOS_MDP\videos\39rhzplv\BR_DRL-train-step-300-to-step-310.mp4
+Saving video to D:\RLinGUD\SOS_MDP\videos\39rhzplv\BR_DRL-train-step-400-to-step-410.mp4
+------------------------------------
+| rollout/              |          |
+|    ep_len_mean        | 6.33     |
+|    ep_rew_mean        | 0.00303  |
+| time/                 |          |
+|    fps                | 323      |
+|    iterations         | 100      |
+|    time_elapsed       | 1        |
+|    total_timesteps    | 500      |
+| train/                |          |
+|    entropy_loss       | -0.36    |
+|    explained_variance | -7.4e+05 |
+|    learning_rate      | 0.0007   |
+|    n_updates          | 99       |
+|    policy_loss        | 0.00338  |
+|    value_loss         | 0.0854   |
+------------------------------------
+Saving video to D:\RLinGUD\SOS_MDP\videos\39rhzplv\BR_DRL-train-step-500-to-step-510.mp4
+Saving video to D:\RLinGUD\SOS_MDP\videos\39rhzplv\BR_DRL-train-step-600-to-step-610.mp4
+Saving video to D:\RLinGUD\SOS_MDP\videos\39rhzplv\BR_DRL-train-step-700-to-step-710.mp4
+Saving video to D:\RLinGUD\SOS_MDP\videos\39rhzplv\BR_DRL-train-step-800-to-step-810.mp4
+Saving video to D:\RLinGUD\SOS_MDP\videos\39rhzplv\BR_DRL-train-step-900-to-step-910.mp4
+------------------------------------
+| rollout/              |          |
+|    ep_len_mean        | 2.71     |
+|    ep_rew_mean        | 0.00164  |
+| time/                 |          |
+|    fps                | 293      |
+|    iterations         | 200      |
+|    time_elapsed       | 3        |
+|    total_timesteps    | 1000     |
+| train/                |          |
+|    entropy_loss       | -0.604   |
+|    explained_variance | -101     |
+|    learning_rate      | 0.0007   |
+|    n_updates          | 199      |
+|    policy_loss        | -0.0201  |
+|    value_loss         | 0.00743  |
+------------------------------------
+plot data saved to plot_data/39rhzplv/

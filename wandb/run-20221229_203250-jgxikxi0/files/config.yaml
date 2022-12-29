@@ -1,0 +1,186 @@
+wandb_version: 1
+
+_current_progress_remaining:
+  desc: null
+  value: 1
+_custom_logger:
+  desc: null
+  value: 'False'
+_episode_num:
+  desc: null
+  value: 0
+_last_episode_starts:
+  desc: null
+  value: '[ True]'
+_last_obs:
+  desc: null
+  value: '[[[127 127 127 127 127 127 127 127 127]]]'
+_last_original_obs:
+  desc: null
+  value: None
+_logger:
+  desc: null
+  value: <stable_baselines3.common.logger.Logger object at 0x00000253B31AA850>
+_n_updates:
+  desc: null
+  value: 0
+_num_timesteps_at_start:
+  desc: null
+  value: 0
+_total_timesteps:
+  desc: null
+  value: 1000
+_vec_normalize_env:
+  desc: null
+  value: None
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.12.18
+    framework: torch
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    python_version: 3.8.13
+    start_time: 1672335170
+    t:
+      1:
+      - 1
+      - 55
+      2:
+      - 1
+      - 55
+      3:
+      - 1
+      - 2
+      - 3
+      - 13
+      - 16
+      - 22
+      - 35
+      4: 3.8.13
+      5: 0.12.18
+      8:
+      - 3
+      - 5
+action_noise:
+  desc: null
+  value: None
+action_space:
+  desc: null
+  value: Discrete(2)
+algo:
+  desc: null
+  value: A2C
+device:
+  desc: null
+  value: cpu
+ent_coef:
+  desc: null
+  value: 0.0
+env:
+  desc: null
+  value: <stable_baselines3.common.vec_env.vec_video_recorder.VecVideoRecorder object
+    at 0x00000253B317CE20>
+ep_info_buffer:
+  desc: null
+  value: deque([], maxlen=100)
+ep_success_buffer:
+  desc: null
+  value: deque([], maxlen=100)
+eval_env:
+  desc: null
+  value: None
+gae_lambda:
+  desc: null
+  value: 1.0
+gamma:
+  desc: null
+  value: 0.99
+learning_rate:
+  desc: null
+  value: 0.0007
+lr_schedule:
+  desc: null
+  value: <function constant_fn.<locals>.func at 0x00000253B30D2B80>
+max_grad_norm:
+  desc: null
+  value: 0.5
+model_save_freq:
+  desc: null
+  value: 500
+n_envs:
+  desc: null
+  value: 1
+n_steps:
+  desc: null
+  value: 5
+normalize_advantage:
+  desc: null
+  value: 'False'
+num_timesteps:
+  desc: null
+  value: 0
+observation_space:
+  desc: null
+  value: Box([[0 0 0 0 0 0 0 0 0]], [[255 255 255 255 255 255 255 255 255]], (1, 9),
+    uint8)
+policy:
+  desc: null
+  value: "ActorCriticPolicy(\n  (features_extractor): FlattenExtractor(\n    (flatten):\
+    \ Flatten(start_dim=1, end_dim=-1)\n  )\n  (mlp_extractor): MlpExtractor(\n  \
+    \  (shared_net): Sequential()\n    (policy_net): Sequential(\n      (0): Linear(in_features=9,\
+    \ out_features=64, bias=True)\n      (1): Tanh()\n      (2): Linear(in_features=64,\
+    \ out_features=64, bias=True)\n      (3): Tanh()\n    )\n    (value_net): Sequential(\n\
+    \      (0): Linear(in_features=9, out_features=64, bias=True)\n      (1): Tanh()\n\
+    \      (2): Linear(in_features=64, out_features=64, bias=True)\n      (3): Tanh()\n\
+    \    )\n  )\n  (action_net): Linear(in_features=64, out_features=2, bias=True)\n\
+    \  (value_net): Linear(in_features=64, out_features=1, bias=True)\n)"
+policy_class:
+  desc: null
+  value: <class 'stable_baselines3.common.policies.ActorCriticPolicy'>
+policy_kwargs:
+  desc: null
+  value: '{''optimizer_class'': <class ''torch.optim.rmsprop.RMSprop''>, ''optimizer_kwargs'':
+    {''alpha'': 0.99, ''eps'': 1e-05, ''weight_decay'': 0}}'
+policy_type:
+  desc: null
+  value: MlpPolicy
+record_video_freq:
+  desc: null
+  value: 100
+rl_alg:
+  desc: null
+  value: A2C
+rollout_buffer:
+  desc: null
+  value: <stable_baselines3.common.buffers.RolloutBuffer object at 0x00000253B31DE8B0>
+sde_sample_freq:
+  desc: null
+  value: -1
+seed:
+  desc: null
+  value: None
+start_time:
+  desc: null
+  value: 1672335175.8428395
+tensorboard_log:
+  desc: null
+  value: runs/jgxikxi0
+total_timesteps:
+  desc: null
+  value: 1000
+use_sde:
+  desc: null
+  value: 'False'
+verbose:
+  desc: null
+  value: 1
+vf_coef:
+  desc: null
+  value: 0.5
+vid_name_prefix:
+  desc: null
+  value: BR_DRL-train
+video_length:
+  desc: null
+  value: 10

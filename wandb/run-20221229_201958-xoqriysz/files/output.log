@@ -1,0 +1,47 @@
+Using cpu device
+Logging to runs/xoqriysz\A2C_1
+Saving video to D:\RLinGUD\SOS_MDP\videos\xoqriysz\BR_DRL-train-step-0-to-step-10.mp4
+Saving video to D:\RLinGUD\SOS_MDP\videos\xoqriysz\BR_DRL-train-step-100-to-step-110.mp4
+Saving video to D:\RLinGUD\SOS_MDP\videos\xoqriysz\BR_DRL-train-step-200-to-step-210.mp4
+Saving video to D:\RLinGUD\SOS_MDP\videos\xoqriysz\BR_DRL-train-step-300-to-step-310.mp4
+Saving video to D:\RLinGUD\SOS_MDP\videos\xoqriysz\BR_DRL-train-step-400-to-step-410.mp4
+------------------------------------
+| rollout/              |          |
+|    ep_len_mean        | 1.82     |
+|    ep_rew_mean        | 0.00121  |
+| time/                 |          |
+|    fps                | 323      |
+|    iterations         | 100      |
+|    time_elapsed       | 1        |
+|    total_timesteps    | 500      |
+| train/                |          |
+|    entropy_loss       | -0.294   |
+|    explained_variance | -0.467   |
+|    learning_rate      | 0.0007   |
+|    n_updates          | 99       |
+|    policy_loss        | 0.023    |
+|    value_loss         | 0.000714 |
+------------------------------------
+Saving video to D:\RLinGUD\SOS_MDP\videos\xoqriysz\BR_DRL-train-step-500-to-step-510.mp4
+Saving video to D:\RLinGUD\SOS_MDP\videos\xoqriysz\BR_DRL-train-step-600-to-step-610.mp4
+Saving video to D:\RLinGUD\SOS_MDP\videos\xoqriysz\BR_DRL-train-step-700-to-step-710.mp4
+Saving video to D:\RLinGUD\SOS_MDP\videos\xoqriysz\BR_DRL-train-step-800-to-step-810.mp4
+Saving video to D:\RLinGUD\SOS_MDP\videos\xoqriysz\BR_DRL-train-step-900-to-step-910.mp4
+------------------------------------
+| rollout/              |          |
+|    ep_len_mean        | 2.9      |
+|    ep_rew_mean        | 0.00175  |
+| time/                 |          |
+|    fps                | 265      |
+|    iterations         | 200      |
+|    time_elapsed       | 3        |
+|    total_timesteps    | 1000     |
+| train/                |          |
+|    entropy_loss       | -0.523   |
+|    explained_variance | -594     |
+|    learning_rate      | 0.0007   |
+|    n_updates          | 199      |
+|    policy_loss        | 0.0105   |
+|    value_loss         | 0.000189 |
+------------------------------------
+plot data saved to plot_data/xoqriysz/
