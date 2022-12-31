@@ -16,7 +16,7 @@ if __name__ == '__main__':
     config = {
         "rl_alg": "A2C",
         "policy_type": "MlpPolicy",
-        "total_timesteps": 100,
+        "total_timesteps": 1000,
         "vid_name_prefix": "BR_DRL-train",
         "record_video_freq": 100,
         "video_length": 10,
@@ -33,7 +33,7 @@ if __name__ == '__main__':
     )
 
     def make_env():
-        env = BR_v1(run, save_img_freq=100, local=True)  # select a gym env from envs.py
+        env = BR_v0(run, save_img_freq=config["record_video_freq"], local=True)  # select a gym env from envs.py
         # check_env(env)  # check if the env follows the gym interface
         env = Monitor(env)  # record stats
         return env

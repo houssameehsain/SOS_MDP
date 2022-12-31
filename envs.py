@@ -224,10 +224,10 @@ class BR_v0(gym.Env):
         frame[:,:,1] = img.astype(np.uint8)
         frame[:,:,2] = img.astype(np.uint8)
 
-        frame = cv2.copyMakeBorder(frame, 30, 5, 5, 5, cv2.BORDER_CONSTANT, None, value = [127, 127, 127])
+        frame = cv2.copyMakeBorder(frame, 50, 5, 5, 5, cv2.BORDER_CONSTANT, None, value = [255, 255, 255])
         total_return = float("{0:.3f}".format(self.cumul_rwd))
-        frame = cv2.putText(frame, f"Episode {self.eps} | Step {self.stp} | Return {total_return}", 
-                        (5,20), cv2.FONT_HERSHEY_DUPLEX, 0.6, (255, 255, 255, 255), 1)
+        frame = cv2.putText(frame, f"Episode {self.eps} Step {self.stp} Return {total_return}", 
+                        (5,40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0, 255), 2)
         return frame
     
     def close(self): 
@@ -472,10 +472,10 @@ class BR_v1(gym.Env):
         frame[:,:,1] = img.astype(np.uint8)
         frame[:,:,2] = img.astype(np.uint8)
 
-        frame = cv2.copyMakeBorder(frame, 30, 5, 5, 5, cv2.BORDER_CONSTANT, None, value = [127, 127, 127])
+        frame = cv2.copyMakeBorder(frame, 50, 5, 5, 5, cv2.BORDER_CONSTANT, None, value = [255, 255, 255])
         total_return = float("{0:.3f}".format(self.cumul_rwd))
-        frame = cv2.putText(frame, f"Episode {self.eps} | Step {self.stp} | Return {total_return}", 
-                        (5,20), cv2.FONT_HERSHEY_DUPLEX, 0.6, (255, 255, 255, 255), 1)
+        frame = cv2.putText(frame, f"Episode {self.eps} Step {self.stp} Return {total_return}", 
+                        (5,40), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 0, 255), 2)
         return frame
     
     def close(self): 
@@ -485,4 +485,5 @@ class BR_v1(gym.Env):
             self.run
         )
         self.isopen = False
+
 
