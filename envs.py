@@ -9,7 +9,8 @@ import networkx as nx
 from networkx.algorithms.approximation import node_connectivity
 from networkx.algorithms.efficiency_measures import global_efficiency
 from networkx.algorithms.centrality import closeness_centrality, betweenness_centrality
-from shapely.geometry import Point, LineString
+from momepy import straightness_centrality
+from shapely.geometry import Point, LineString, Polygon
 
 from helpers.log import log_plot_data
 
@@ -24,7 +25,7 @@ class BR_v0(gym.Env):
     world, and another with a user adjustable local observation where the agent gets information 
     about the state of the neighboring cells only. (default: local observation)
 
-    """
+    """ 
 
     metadata = {"render.modes": ["human", "rgb_array"], "video.frames_per_second": 10}
 
@@ -39,7 +40,6 @@ class BR_v0(gym.Env):
         self._carrier_color = 127.5
         self._house_color = 0
         self._street_color = 255
-        self._cell_size = 3
         self._max_row_len = 36  # length and width of the cellular automata world
 
         self.pad = 0
@@ -224,6 +224,7 @@ class BR_v0(gym.Env):
         frame[:,:,1] = img.astype(np.uint8)
         frame[:,:,2] = img.astype(np.uint8)
 
+        # add eps, step, rwd text to frame
         frame = cv2.copyMakeBorder(frame, 50, 5, 5, 5, cv2.BORDER_CONSTANT, None, value = [255, 255, 255])
         total_return = float("{0:.3f}".format(self.cumul_rwd))
         frame = cv2.putText(frame, f"Episode {self.eps} Step {self.stp} Return {total_return}", 
@@ -288,7 +289,16 @@ class BR_v1(gym.Env):
 
         # initial street graph
         self.graph = nx.Graph()
-        
+
+        # shapely grid world 
+        self.grid = []
+        for y in reversed(range(self._max_row_len)):
+            poly_row = []
+            for x in range(self._max_row_len):
+                cell_poly = Polygon([(x, y), (x+1, y), (x+1, y+1), (x, y+1)])
+                poly_row.append(cell_poly)
+            self.grid.append(poly_row)
+
         # initial state
         self.state = np.full([self.max_world_row_len, self.max_world_row_len], self._carrier_color)
 
@@ -336,9 +346,10 @@ class BR_v1(gym.Env):
         
         adjacent = self.get_adjacent()
         
-        # update street graph
         if _cell_state == 1:
-            self.graph.add_node(tuple(self.cell)) # Add street node to graph
+            # Add street node to graph
+            point = self.grid[self.x][self.y].centroid
+            self.graph.add_node((point.x, point.y)) 
 
             for item in adjacent:
                 # Add adjacent cells only if they're street cells
@@ -346,10 +357,14 @@ class BR_v1(gym.Env):
                     self.adjacent_cells.append(item)
                     self.adj_cells.append(item)
 
-                _adj_state = self.state[item[0]+self.pad, item[1]+self.pad]
-                # Add graph edge if adjacent cell is a street cell 
+                # update street graph edges
+                _adj_x = item[0]
+                _adj_y = item[1]
+                _adj_state = self.state[_adj_x+self.pad, _adj_y+self.pad]
+                # Add street graph edge if adjacent cell is a street cell 
                 if round(_adj_state/255) == 1:
-                    self.graph.add_edge(tuple(self.cell), tuple(item))  # Add edge to street graph
+                    _adj_point = self.grid[_adj_x][_adj_y].centroid
+                    self.graph.add_edge((point.x, point.y), (_adj_point.x, _adj_point.y)) 
 
         # reward
         reward = 0
@@ -360,6 +375,7 @@ class BR_v1(gym.Env):
             reward += global_efficiency(self.graph)  # efficiency reward 
             reward += mean(list(closeness_centrality(self.graph).values()))  # closeness reward
             reward += mean(list(betweenness_centrality(self.graph).values()))  # betweenness reward
+            # reward += straightness_centrality(self.graph, normalized=True, verbose=False)
 
         if _cell_state == 0: # house cell
             reward += 1/(self._max_row_len**2)  # density 
@@ -384,7 +400,7 @@ class BR_v1(gym.Env):
         
         # save state image to project dir
         if self.eps == 1 or self.eps % self.save_img_freq == 0:
-            frame = self.make_screen()
+            frame = self.make_screen(show_graph=True)
             cv2.imwrite(self.path + f"BR_v1_eps-{self.eps}_step-{self.stp}.png", frame)
 
         # log returns and episode lengths
@@ -425,7 +441,7 @@ class BR_v1(gym.Env):
     def render(self, mode='human'):
         assert mode in ["human", "rgb_array"], "Invalid mode, must be either 'human' or 'rgb_array'"
 
-        frame = self.make_screen()
+        frame = self.make_screen(show_graph=True)
 
         if mode == "human":
             cv2.imshow('BeadyRing_v1', frame)
@@ -460,18 +476,47 @@ class BR_v1(gym.Env):
             adjacent.append([self.x, self.y+1])
         return adjacent
 
-    def make_screen(self):
+    def make_screen(self, show_graph=False):
+        
         if self.local:
             img = self.state[self.pad:self._max_row_len+self.pad, self.pad:self._max_row_len+self.pad]
         else:
             img = self.state
-        img = img.reshape(self._max_row_len, self._max_row_len)
-        img = cv2.resize(img, (self.screen_width, self.screen_height), interpolation = cv2.INTER_AREA)
-        frame = np.zeros([self.screen_width, self.screen_height, 3], dtype=np.uint8)
-        frame[:,:,0] = img.astype(np.uint8)
-        frame[:,:,1] = img.astype(np.uint8)
-        frame[:,:,2] = img.astype(np.uint8)
 
+        if show_graph:
+            frame = np.zeros([self._max_row_len, self._max_row_len, 3], np.uint8)
+
+            # draw shapely polygon cells on frame
+            for y in reversed(range(self._max_row_len)):
+                for x in range(self._max_row_len):
+                    cell = self.grid[y][x]
+                    coords = np.array(cell.exterior.coords, dtype=np.int32)
+                    coords = coords.reshape((-1,1,2))
+                    cell_state = img[y][x]
+                    if round(cell_state / self._street_color) == 1:
+                        cv2.fillPoly(frame, [coords], (255,255,255))
+                    elif cell_state == self._house_color:
+                        cv2.fillPoly(frame, [coords], (0,0,0))
+                    else:
+                        cv2.fillPoly(frame, [coords], (127,127,127))
+                    
+            # draw graph edges on frame
+            for edge in self.graph.edges:
+                point1 = edge[0]
+                point2 = edge[1]
+                cv2.line(frame, (int(point1[0]), int(point1[1])), (int(point2[0]), int(point2[1])), (0,0,255), 1)
+
+            frame = cv2.resize(frame, (self.screen_width, self.screen_height), interpolation = cv2.INTER_AREA)
+
+        else:
+            img = img.reshape(self._max_row_len, self._max_row_len)
+            img = cv2.resize(img, (self.screen_width, self.screen_height), interpolation = cv2.INTER_AREA)
+            frame = np.zeros([self.screen_width, self.screen_height, 3], dtype=np.uint8)
+            frame[:,:,0] = img.astype(np.uint8)
+            frame[:,:,1] = img.astype(np.uint8)
+            frame[:,:,2] = img.astype(np.uint8)
+
+        # add eps, step, rwd text to frame 
         frame = cv2.copyMakeBorder(frame, 50, 5, 5, 5, cv2.BORDER_CONSTANT, None, value = [255, 255, 255])
         total_return = float("{0:.3f}".format(self.cumul_rwd))
         frame = cv2.putText(frame, f"Episode {self.eps} Step {self.stp} Return {total_return}", 
