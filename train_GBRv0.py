@@ -5,33 +5,28 @@ import json
 from toolz.itertoolz import interleave
 
 import torch.nn as nn
-from stable_baselines3 import DQN, A2C, PPO, SAC, TD3, HerReplayBuffer
-from stable_baselines3.common.buffers import DictReplayBuffer
-from sb3_contrib import RecurrentPPO, TRPO, ARS, QRDQN
+from stable_baselines3 import DQN, PPO 
 
-from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecNormalize 
+from stable_baselines3.common.vec_env import SubprocVecEnv 
 from stable_baselines3.common.monitor import Monitor
-from stable_baselines3.common.sb2_compat.rmsprop_tf_like import RMSpropTFLike
-from stable_baselines3.common.noise import NormalActionNoise
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.env_util import make_vec_env 
 from stable_baselines3.common.callbacks import ProgressBarCallback, BaseCallback, CallbackList 
 from stable_baselines3.common.env_checker import check_env   
 
-from gym.wrappers import TimeLimit
 from envs import GBR_v0
 
 
-run_id = "QRDQN_BRv0_2000_fullObs" 
+run_id = "gbrv0_dqn_moore_10" 
 evaluate = False 
 
 config = {
-    "rl_alg": "QRDQN",
-    "policy_type": "CnnPolicy",
-    "n_workers": 12,  # number of parallel processes to use 
-    "total_timesteps": 30000000,  # total number of steps
+    "rl_alg": "DQN",
+    "policy_type": "MlpPolicy",
+    "n_workers": 32,  # number of parallel processes to use 
+    "total_timesteps": 3000000,  # total number of steps
     "train_log_eps_freq": 1, 
-    "train_render_eps_freq": 1000,
+    "train_render_eps_freq": 50,
     "n_eval_eps": 100,
     "train_run_dir": f"./logs/run_{run_id}/train/",
     "eval_run_dir": f"./logs/run_{run_id}/eval/",
@@ -78,7 +73,7 @@ class TrainCallback(BaseCallback):
                         outfile.write(json_obj)
 
                     # Mean training reward over the last 100 episodes
-                    mean_reward = np.mean(scores[-100:])
+                    mean_reward = np.mean(returns[-100:])
                     # New best model, you could save the agent here
                     if mean_reward > self.best_mean_reward:
                         self.best_mean_reward = mean_reward
@@ -87,11 +82,11 @@ class TrainCallback(BaseCallback):
                             print(f"Eps {eps} Best Avg Rwd {self.best_mean_reward:.3f} | Saving new best model to {self.save_path}")
                         self.model.save(self.save_path)
 
-        # if eps % self.render_freq == 0: 
-        #     # log renders
-        #     frame = self.envs.get_images()[-1]
-        #     bgr_array = cv2.cvtColor(frame, cv2.COLOR_RGBA2BGR)
-        #     cv2.imwrite(f"{self.dir}{eps}-{stp}.png", bgr_array)
+        if eps % self.render_freq == 0: 
+            # log renders
+            frame = self.envs.get_images()[-1]
+            bgr_array = cv2.cvtColor(frame, cv2.COLOR_RGBA2BGR)
+            cv2.imwrite(f"{self.dir}{eps}-{stp}.png", bgr_array)
 
         return True  
 
@@ -103,108 +98,65 @@ if __name__ == '__main__':
     os.makedirs(config["train_run_dir"], exist_ok=True)
 
     # multiprocess training 
-    env = make_vec_env(lambda: GBR_v0(local=False, screen_size=500),
+    env = make_vec_env(lambda: GBR_v0(local=True, screen_size=500),
                         n_envs=config["n_workers"], 
                         vec_env_cls=SubprocVecEnv)
 
     # env = Monitor(env, config["train_run_dir"])
     # check_env(env) # check if the env follows the gym interface 
 
-    if config["rl_alg"] == 'A2C': 
-        model = A2C(policy = config["policy_type"], 
-                    env = env, 
-                    gamma = 0.9,
-                    gae_lambda = 0.999,  
-                    learning_rate = 1.05e-05, 
-                    max_grad_norm = 0.35, 
-                    n_steps = 64,  
-                    ent_coef = 2.91e-06, 
-                    vf_coef = 0.111,
-                    policy_kwargs=dict( 
-                             net_arch=dict(pi=[512, 512, 512, 128], vf=[512, 512, 512, 128]),
-                             activation_fn=nn.Tanh, 
-                             ortho_init=False,
-                             optimizer_class=RMSpropTFLike,
-                             optimizer_kwargs=dict(alpha=0.99, eps=1e-5, weight_decay=0)),
-                    normalize_advantage = True, 
-                    # use_rms_prop = True, 
-                    # use_sde = True, 
-                    device = 'cpu',  # 'cuda' 'cpu' 
-                    verbose = 0)  # verbose=2 for debugging 
-
-    elif config["rl_alg"] == 'DQN':
+    if config["rl_alg"] == 'DQN':
         model = DQN(policy = config["policy_type"],
                     env = env,
+                    gamma = 0.999,
+                    learning_rate = 0.000809342,
+                    batch_size = 128,
+                    buffer_size = 50000,
+                    train_freq = 8,
+                    gradient_steps = 4,
+                    exploration_fraction = 0.03640738,
+                    exploration_final_eps = 0.00104112,
+                    target_update_interval = 1,
+                    learning_starts = 0,
+                    policy_kwargs = dict(net_arch=[64]),
                     device = 'cpu',  # 'cuda' 'cpu'
                     verbose=0)  # verbose=2 for debugging
-
-    elif config["rl_alg"] == 'QRDQN':
-        policy_kwargs = dict(n_quantiles=50)
-
-        model = QRDQN(policy = config["policy_type"],
+    
+    if config["rl_alg"] == 'DQN-CNN':
+        model = DQN(policy = "CnnPolicy",
                     env = env,
-                    policy_kwargs=policy_kwargs,
+                    gamma = 0.999,
+                    learning_rate = 0.000621429983014515,
+                    batch_size = 256,
+                    buffer_size = 10000,
+                    train_freq = 256,
+                    gradient_steps = 256,
+                    exploration_fraction = 0.127963173155836,
+                    exploration_final_eps = 0.0375556799144331,
+                    target_update_interval = 5000,
+                    learning_starts = 5000,
+                    policy_kwargs = dict(net_arch=[256, 256, 256]),
                     device = 'cpu',  # 'cuda' 'cpu'
                     verbose=0)  # verbose=2 for debugging
         
     elif config["rl_alg"] == 'PPO':
         model = PPO(policy = config["policy_type"],
                     env = env,
-                    device = 'cpu',  # 'cuda' 'cpu'
-                    verbose=0)  # verbose=2 for debugging
-
-    elif config["rl_alg"] == 'lstmPPO':
-        model = RecurrentPPO(policy = "MlpLstmPolicy",
-                    env = env,
-                    device = 'cpu',  # 'cuda' 'cpu'
-                    verbose=0)  # verbose=2 for debugging
-
-    elif config["rl_alg"] == 'ARS':
-        model = ARS(policy = config["policy_type"],
-                    env = env,
-                    delta_std = 0.2,
-                    device = 'cpu',  # 'cuda' 'cpu'
-                    verbose=0)  # verbose=2 for debugging
-
-    elif config["rl_alg"] == 'SAC':
-        model = SAC(policy = config["policy_type"],
-                    # policy_kwargs=dict(n_critics=2, net_arch=[512, 512, 512]),
-                    env = env, 
-                    replay_buffer_class = HerReplayBuffer,
-                    replay_buffer_kwargs = dict(
-                        n_sampled_goal=6,
-                        goal_selection_strategy="future",  # 'episode', 'final', 'future'
-                    ), 
-                    # batch_size = 512,
-                    # buffer_size = 1000000,
-                    learning_starts = 100000,
-                    # learning_rate = 3e-4,
-                    # ent_coef = 0.15, # 'auto'
-                    gradient_steps = -1, # config["n_workers"],
-                    # train_freq = (1000, "step"), 
-                    device = 'cpu',  # 'cuda' 'cpu'
-                    verbose=1)  # verbose=2 for debugging
-
-    elif config["rl_alg"] == 'TD3':
-        n_actions = env.action_space.shape[-1]
-        action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.2 * np.ones(n_actions))
-
-        model = TD3(policy = config["policy_type"],
-                    # policy_kwargs=dict(n_critics=2, net_arch=[512, 512, 512]),
-                    env = env,
-                    # replay_buffer_class = HerReplayBuffer,
-                    # replay_buffer_kwargs = dict(
-                    #     n_sampled_goal=4,
-                    #     goal_selection_strategy="future",  # 'episode', 'final', 'future'
-                    # ), 
-                    # batch_size = 512,
-                    # buffer_size = 1000000,
-                    learning_starts = 20000,
-                    action_noise = action_noise,
-                    # learning_rate = 3e-4,
-                    # ent_coef = 0.15, # 'auto'
-                    # gradient_steps = config["n_workers"],
-                    # train_freq = 1, 
+                    learning_rate = 1.26e-05, 
+                    n_steps = 2048, 
+                    batch_size = 256, 
+                    n_epochs = 20, 
+                    gamma = 0.99, 
+                    gae_lambda = 0.99, 
+                    clip_range = 0.3, 
+                    ent_coef = 2.52e-07, 
+                    vf_coef = 2.69e-06, 
+                    max_grad_norm = 0.9, 
+                    policy_kwargs = dict(
+                        net_arch=dict(pi=[256, 256], vf=[256, 256]),
+                        activation_fn=nn.ReLU,
+                        ortho_init=True,
+                    ),
                     device = 'cpu',  # 'cuda' 'cpu'
                     verbose=0)  # verbose=2 for debugging
 
@@ -232,11 +184,11 @@ if __name__ == '__main__':
 
     # Evaluate the trained agent
     if evaluate:
-        trained_eval_env = Monitor(GBR_v0(local=False, screen_size=500))
+        trained_eval_env = Monitor(GBR_v0(local=True, screen_size=500))
 
         # del and reload trained model 
         del model
-        model = A2C.load(f"{config['model_dir']}best_model", env=trained_eval_env, print_system_info=False)
+        model = PPO.load(f"{config['model_dir']}best_model", env=trained_eval_env, print_system_info=False)
 
         mean_reward, std_reward = evaluate_policy(model, trained_eval_env, n_eval_episodes=config["n_eval_eps"])
         print(f'Trained agent | Mean reward: {mean_reward} +/- {std_reward:.2f}')

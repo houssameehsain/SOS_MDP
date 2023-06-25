@@ -5,30 +5,56 @@ import seaborn as sns
 import json
 
 
+# data 1
+f = open("./run_gpnv0_dqn_10_01/train/plots/performance_log.json")
 
-f = open("./logs/run_QRDQN_BRv0_2000_fullObs/train/plots/performance_log.json")
+# "./logs/run_gbrv0_dqn_moore/train/plots/gbrv0_dqn_moore_09_train_plots_performance_log.json"
+
 json_obj = json.load(f)
 
-returns = np.array(json_obj["scores"], dtype=np.float32)
-# eps_lens = np.array(json_obj["eps_lengths"], dtype=np.float32)
-print(len(returns)) 
+returns_1 = np.array(json_obj["returns"], dtype=np.float32)[:22087]
+eps_lens_1 = np.array(json_obj["eps_lengths"], dtype=np.float32)[:22087]
+print(len(returns_1)) 
 
-# returns = np.array(new_list, dtype=np.float32) 
-
-perf = {
-    'episode': [i + 1 for i in range(len(returns))],
-    'return': returns,
-    # 'eps_len': eps_lens,
+perf_1 = {
+    'episode': [i + 1 for i in range(len(returns_1))],
+    'return': returns_1,
+    'eps_len': eps_lens_1,
 }
 
-indices = np.array([i + 1 for i in range(len(returns))], dtype=np.int32)
+indices_1 = np.array([i + 1 for i in range(len(returns_1))], dtype=np.int32)
 
-perf_df = pd.DataFrame(perf, index=indices)
+perf_df_1 = pd.DataFrame(perf_1, index=indices_1)
+
+
+# data 2
+f = open("./run_gpnv0_ppo_10_01/train/plots/performance_log.json")
+json_obj = json.load(f)
+
+returns_2 = np.array(json_obj["returns"], dtype=np.float32)
+eps_lens_2 = np.array(json_obj["eps_lengths"], dtype=np.float32)
+print(len(returns_2))
+
+perf_2 = {
+    'episode': [i + 1 for i in range(len(returns_2))],
+    'return': returns_2,
+    'eps_len': eps_lens_2,
+}
+
+indices_2 = np.array([i + 1 for i in range(len(returns_2))], dtype=np.int32)
+
+perf_df_2 = pd.DataFrame(perf_2, index=indices_2)
+
 
 sns.set()
-smooth = 100
+sns.set_theme(style="darkgrid")
+sns.set_context("paper")
 
-for metric in list(perf.keys()):
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 4))
+
+# plot 1
+smooth = 100
+for metric in list(perf_1.keys()):
     if metric == 'episode':
         continue
     else:
@@ -36,32 +62,8 @@ for metric in list(perf.keys()):
             color = 'b'
             style = '-'
             op = 1
-        # elif metric == 'return':
-        #     color = 'g'
-        #     style = '-'
-        #     op = 1
         else: 
             continue
-        # elif metric == 'adS':
-        #     color = '#777b7e'
-        #     style = '-'
-        #     op = 0.5
-        # elif metric == 'rcS':
-        #     color = '#999da0'
-        #     style = '-'
-        #     op = 0.5
-        # elif metric == 'pcS':
-        #     color = '#787276'
-        #     style = '-'
-        #     op = 0.5
-        # elif metric == 'raS':
-        #     color = '#808588'
-        #     style = '-'
-        #     op = 0.5
-        # elif metric == 'rdS':
-        #     color = '#b9bbb6'
-        #     style = '-'
-        #     op = 0.5
         
         if smooth > 1:
             """
@@ -71,191 +73,134 @@ for metric in list(perf.keys()):
             where the "smooth" param is width of that window (2k+1)
             """
             y = np.ones(smooth)
-            x = np.asarray(perf_df[metric])
+            x = np.asarray(perf_df_1[metric])
             z = np.ones(len(x))
             smoothed_x = np.convolve(x,y,'same') / np.convolve(z,y,'same')
 
             # line plots
-            plt.plot(perf_df["episode"], x, c=color, ls=style, alpha=0.3)
-            plt.plot(perf_df["episode"], smoothed_x, c=color, ls=style, label="QR-DQN", alpha=op)
+            ax1.plot(perf_df_1["episode"], x, c=color, ls=style, alpha=0.15)
+            ax1.plot(perf_df_1["episode"], smoothed_x, c=color, ls=style, label="DQN", alpha=op)
+
+        else:
+            # line plot
+            ax1.plot(perf_df_1["episode"], perf_df_1[metric], 'b-', label='value', alpha=1)
+
+# plot 2
+smooth = 100
+for metric in list(perf_2.keys()):
+    if metric == 'episode':
+        continue
+    else:
+        if metric == 'return':
+            color = 'orange'
+            style = '-'
+            op = 1
+        else: 
+            continue
+        
+        if smooth > 1:
+            """
+            smooth data with moving window average.
+            that is,
+                smoothed_y[t] = average(y[t-k], y[t-k+1], ..., y[t+k-1], y[t+k])
+            where the "smooth" param is width of that window (2k+1)
+            """
+            y = np.ones(smooth)
+            x = np.asarray(perf_df_2[metric])
+            z = np.ones(len(x))
+            smoothed_x = np.convolve(x,y,'same') / np.convolve(z,y,'same')
+
+            # line plots
+            ax1.plot(perf_df_2["episode"], x, c=color, ls=style, alpha=0.15)
+            ax1.plot(perf_df_2["episode"], smoothed_x, c=color, ls=style, label="PPO", alpha=op)
 
             # if multi runs, can use this to display a 0.95 confidence interval
             # plt.fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
         else:
             # line plot
-            plt.plot(perf_df["episode"], perf_df[metric], 'b-', label='value', alpha=1)
+            ax1.plot(perf_df_2["episode"], perf_df_2[metric], 'b-', label='value', alpha=1)
 
-
-# f = open("./Python/logs/run_/train/plots/performance_log.json")
-# json_obj = json.load(f)
-
-# returns = np.array(json_obj["scores"], dtype=np.float32)
-# # eps_lens = np.array(json_obj["eps_lengths"], dtype=np.float32)
-# print(len(returns))
-
-# # print(rdS.shape)
-# # print(adS.shape)
-# # print(planVals.shape)
-
-# perf = {
-#     'episode': [i + 1 for i in range(len(returns))],
-#     'return': returns,
-#     # 'eps_len': eps_lens,
-# }
-
-# indices = np.array([i + 1 for i in range(len(returns))], dtype=np.int32)
-
-# perf_df = pd.DataFrame(perf, index=indices)
-
-# smooth = 1000
-
-# for metric in list(perf.keys()):
-#     if metric == 'episode':
-#         continue
-#     else:
-#         if metric == 'return':
-#             color = 'b'
-#             style = '-'
-#             op = 1
-#         # elif metric == 'return':
-#         #     color = 'g'
-#         #     style = '-'
-#         #     op = 1
-#         else: 
-#             continue
-#         # elif metric == 'adS':
-#         #     color = '#777b7e'
-#         #     style = '-'
-#         #     op = 0.5
-#         # elif metric == 'rcS':
-#         #     color = '#999da0'
-#         #     style = '-'
-#         #     op = 0.5
-#         # elif metric == 'pcS':
-#         #     color = '#787276'
-#         #     style = '-'
-#         #     op = 0.5
-#         # elif metric == 'raS':
-#         #     color = '#808588'
-#         #     style = '-'
-#         #     op = 0.5
-#         # elif metric == 'rdS':
-#         #     color = '#b9bbb6'
-#         #     style = '-'
-#         #     op = 0.5
+# plot 3
+smooth = 100
+for metric in list(perf_1.keys()):
+    if metric == 'episode':
+        continue
+    else:
+        if metric == 'eps_len':
+            color = 'b'
+            style = '-'
+            op = 1
+        else: 
+            continue
         
-#         if smooth > 1:
-#             """
-#             smooth data with moving window average.
-#             that is,
-#                 smoothed_y[t] = average(y[t-k], y[t-k+1], ..., y[t+k-1], y[t+k])
-#             where the "smooth" param is width of that window (2k+1)
-#             """
-#             y = np.ones(smooth)
-#             x = np.asarray(perf_df[metric])
-#             z = np.ones(len(x))
-#             smoothed_x = np.convolve(x,y,'same') / np.convolve(z,y,'same')
+        if smooth > 1:
+            """
+            smooth data with moving window average.
+            that is,
+                smoothed_y[t] = average(y[t-k], y[t-k+1], ..., y[t+k-1], y[t+k])
+            where the "smooth" param is width of that window (2k+1)
+            """
+            y = np.ones(smooth)
+            x = np.asarray(perf_df_1[metric])
+            z = np.ones(len(x))
+            smoothed_x = np.convolve(x,y,'same') / np.convolve(z,y,'same')
 
-#             # line plots
-#             plt.plot(perf_df["episode"], x, c=color, ls=style, alpha=0.3)
-#             plt.plot(perf_df["episode"], smoothed_x, c=color, ls=style, label="Distributed Reward", alpha=op)
+            # line plots
+            ax2.plot(perf_df_1["episode"], x, c=color, ls=style, alpha=0.15)
+            ax2.plot(perf_df_1["episode"], smoothed_x, c=color, ls=style, label="DQN", alpha=op)
 
-#             # if multi runs, can use this to display a 0.95 confidence interval
-#             # plt.fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
-#         else:
-#             # line plot
-#             plt.plot(perf_df["episode"], perf_df[metric], 'b-', label='value', alpha=1)
+        else:
+            # line plot
+            ax2.plot(perf_df_1["episode"], perf_df_1[metric], 'b-', label='value', alpha=1)
 
-
-
-# f = open("./Python/logs/run_/train/plots/performance_log.json")
-# json_obj = json.load(f)
-
-# returns = np.array(json_obj["scores"], dtype=np.float32)
-# # eps_lens = np.array(json_obj["eps_lengths"], dtype=np.float32)
-
-# # print(rdS.shape)
-# # print(adS.shape)
-# # print(planVals.shape)
-
-# print(len(returns)) 
-
-# perf = {
-#     'episode': [i + 1 for i in range(len(returns))],
-#     'return': returns,
-#     # 'eps_len': eps_lens,
-# }
-
-# indices = np.array([i + 1 for i in range(len(returns))], dtype=np.int32)
-
-# perf_df = pd.DataFrame(perf, index=indices)
-
-# smooth = 1000
-
-# for metric in list(perf.keys()):
-#     if metric == 'episode':
-#         continue
-#     else:
-#         if metric == 'return':
-#             color = 'r'
-#             style = '-'
-#             op = 1
-#         # elif metric == 'return':
-#         #     color = 'g'
-#         #     style = '-'
-#         #     op = 1
-#         else: 
-#             continue
-#         # elif metric == 'adS':
-#         #     color = '#777b7e'
-#         #     style = '-'
-#         #     op = 0.5
-#         # elif metric == 'rcS':
-#         #     color = '#999da0'
-#         #     style = '-'
-#         #     op = 0.5
-#         # elif metric == 'pcS':
-#         #     color = '#787276'
-#         #     style = '-'
-#         #     op = 0.5
-#         # elif metric == 'raS':
-#         #     color = '#808588'
-#         #     style = '-'
-#         #     op = 0.5
-#         # elif metric == 'rdS':
-#         #     color = '#b9bbb6'
-#         #     style = '-'
-#         #     op = 0.5
+# plot 4
+smooth = 100
+for metric in list(perf_2.keys()):
+    if metric == 'episode':
+        continue
+    else:
+        if metric == 'eps_len':
+            color = 'orange'
+            style = '-'
+            op = 1
+        else: 
+            continue
         
-#         if smooth > 1:
-#             """
-#             smooth data with moving window average.
-#             that is,
-#                 smoothed_y[t] = average(y[t-k], y[t-k+1], ..., y[t+k-1], y[t+k])
-#             where the "smooth" param is width of that window (2k+1)
-#             """
-#             y = np.ones(smooth)
-#             x = np.asarray(perf_df[metric])
-#             z = np.ones(len(x))
-#             smoothed_x = np.convolve(x,y,'same') / np.convolve(z,y,'same')
+        if smooth > 1:
+            """
+            smooth data with moving window average.
+            that is,
+                smoothed_y[t] = average(y[t-k], y[t-k+1], ..., y[t+k-1], y[t+k])
+            where the "smooth" param is width of that window (2k+1)
+            """
+            y = np.ones(smooth)
+            x = np.asarray(perf_df_2[metric])
+            z = np.ones(len(x))
+            smoothed_x = np.convolve(x,y,'same') / np.convolve(z,y,'same')
 
-#             # line plots
-#             plt.plot(perf_df["episode"], x, c=color, ls=style, alpha=0.3)
-#             plt.plot(perf_df["episode"], smoothed_x, c=color, ls=style, label="Non-Distributed Reward", alpha=op)
+            # line plots
+            ax2.plot(perf_df_2["episode"], x, c=color, ls=style, alpha=0.15)
+            ax2.plot(perf_df_2["episode"], smoothed_x, c=color, ls=style, label="PPO", alpha=op)
 
-#             # if multi runs, can use this to display a 0.95 confidence interval
-#             # plt.fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
-#         else:
-#             # line plot
-#             plt.plot(perf_df["episode"], perf_df[metric], 'b-', label='value', alpha=1)
-
-
-plt.legend(title='legend')
-
-plt.title('Generalized Beady Ring Environment', fontsize=14, fontweight='bold')
-plt.xlabel('Episode')
-plt.ylabel('Average Density Score')
-plt.show()
+            # if multi runs, can use this to display a 0.95 confidence interval
+            # plt.fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
+        else:
+            # line plot
+            ax2.plot(perf_df_2["episode"], perf_df_2[metric], 'b-', label='value', alpha=1)
 
 
+handles, labels = ax1.get_legend_handles_labels()
+fig.legend(handles, labels, bbox_to_anchor=(0.8, 1), loc='upper center', ncol=4)
+# plt.legend()
+
+ax1.set_xlabel('Episode')
+ax1.set_ylabel('Average Cummulative Reward')
+
+ax2.set_xlabel('Episode')
+ax2.set_ylabel('Average Episode Length')
+
+plt.suptitle('GPN Environment', fontsize=12, fontweight='bold')
+
+# plt.show()
+plt.savefig(fname="./gpnv0_dqn_ppo.png", dpi=300)
 

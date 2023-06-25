@@ -25,14 +25,14 @@ N_TRIALS = 1000
 N_JOBS = 1
 N_STARTUP_TRIALS = 5
 N_EVALUATIONS = 2
-N_TIMESTEPS = int(1e5)
-N_EVAL_EPISODES = 10
+N_TIMESTEPS = int(2e5)
+N_EVAL_EPISODES = 100
 N_ENVS = 12
 EVAL_FREQ = max(int(N_TIMESTEPS / N_EVALUATIONS) // N_ENVS, 1)
 
-TIMEOUT = int(60 * 2000)  # 480 minutes
+TIMEOUT = int(60 * 3000)  # 480 minutes
 
-run_id = "hypertune_a2c_brv0_01"
+run_id = "hypertune_a2c_brv0_03"
 directory = f"./logs/run_{run_id}/"
 os.makedirs(directory, exist_ok=True)
 
@@ -130,10 +130,10 @@ def objective(trial: optuna.Trial) -> float:
     env = make_vec_env(lambda: GBR_v0(local=False, screen_size=500),
                         n_envs=N_ENVS, 
                         vec_env_cls=SubprocVecEnv)
-    env = VecNormalize(env)
+    # env = VecNormalize(env)
 
     # Create the RL model 
-    model = A2C(policy="MlpPolicy", 
+    model = A2C(policy="CnnPolicy", 
                 env=env,
                 device='cpu', 
                 **kwargs) 
@@ -142,7 +142,7 @@ def objective(trial: optuna.Trial) -> float:
     eval_env = make_vec_env(lambda: GBR_v0(local=False, screen_size=500),
                         n_envs=N_ENVS, 
                         vec_env_cls=SubprocVecEnv)
-    eval_env = VecNormalize(eval_env)
+    # eval_env = VecNormalize(eval_env)
 
     # Create the callback that will periodically evaluate
     # and report the performance

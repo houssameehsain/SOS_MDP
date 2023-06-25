@@ -5,33 +5,28 @@ import json
 from toolz.itertoolz import interleave
 
 import torch.nn as nn
-from stable_baselines3 import DQN, A2C, PPO, SAC, TD3, HerReplayBuffer
-from stable_baselines3.common.buffers import DictReplayBuffer
-from sb3_contrib import RecurrentPPO, TRPO, ARS, QRDQN
+from stable_baselines3 import DQN, PPO
 
-from stable_baselines3.common.vec_env import DummyVecEnv, SubprocVecEnv, VecNormalize 
+from stable_baselines3.common.vec_env import SubprocVecEnv 
 from stable_baselines3.common.monitor import Monitor
-from stable_baselines3.common.sb2_compat.rmsprop_tf_like import RMSpropTFLike
-from stable_baselines3.common.noise import NormalActionNoise
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.env_util import make_vec_env 
 from stable_baselines3.common.callbacks import ProgressBarCallback, BaseCallback, CallbackList 
 from stable_baselines3.common.env_checker import check_env   
 
-from gym.wrappers import TimeLimit
 from envs import GPN_v0
 
 
-run_id = "QRDQN_PNv0_1000_fullObs" 
+run_id = "gpnv0_ppo_10_04" 
 evaluate = False 
 
 config = {
-    "rl_alg": "QRDQN",
+    "rl_alg": "PPO",
     "policy_type": "MlpPolicy",
-    "n_workers": 1,  # number of parallel processes to use 
-    "total_timesteps": 10000000,  # total number of steps
+    "n_workers": 32,  # number of parallel processes to use 
+    "total_timesteps": 3000000,  # total number of steps
     "train_log_eps_freq": 1, 
-    "train_render_eps_freq": 1,
+    "train_render_eps_freq": 50,
     "n_eval_eps": 100,
     "train_run_dir": f"./logs/run_{run_id}/train/",
     "eval_run_dir": f"./logs/run_{run_id}/eval/",
@@ -110,101 +105,41 @@ if __name__ == '__main__':
     # env = Monitor(env, config["train_run_dir"])
     # check_env(env) # check if the env follows the gym interface 
 
-    if config["rl_alg"] == 'A2C': 
-        model = A2C(policy = config["policy_type"], 
-                    env = env, 
-                    gamma = 0.9,
-                    gae_lambda = 0.999,  
-                    learning_rate = 1.05e-05, 
-                    max_grad_norm = 0.35, 
-                    n_steps = 64,  
-                    ent_coef = 2.91e-06, 
-                    vf_coef = 0.111,
-                    policy_kwargs=dict( 
-                             net_arch=dict(pi=[512, 512, 512, 128], vf=[512, 512, 512, 128]),
-                             activation_fn=nn.Tanh, 
-                             ortho_init=False,
-                             optimizer_class=RMSpropTFLike,
-                             optimizer_kwargs=dict(alpha=0.99, eps=1e-5, weight_decay=0)),
-                    normalize_advantage = True, 
-                    # use_rms_prop = True, 
-                    # use_sde = True, 
-                    device = 'cpu',  # 'cuda' 'cpu' 
-                    verbose = 0)  # verbose=2 for debugging 
-
-    elif config["rl_alg"] == 'DQN':
+    if config["rl_alg"] == 'DQN':
         model = DQN(policy = config["policy_type"],
                     env = env,
+                    gamma = 0.99,
+                    learning_rate = 0.039950128395957,
+                    batch_size = 64,
+                    buffer_size = 100000,
+                    train_freq = 128,
+                    gradient_steps = 16,
+                    exploration_fraction = 0.00336290481089121,
+                    exploration_final_eps = 0.0123340810433939,
+                    target_update_interval = 15000,
+                    learning_starts = 10000,
+                    policy_kwargs = dict(net_arch=[64, 64]),
                     device = 'cpu',  # 'cuda' 'cpu'
                     verbose=0)  # verbose=2 for debugging
 
-    elif config["rl_alg"] == 'QRDQN':
-        policy_kwargs = dict(n_quantiles=50)
-
-        model = QRDQN(policy = config["policy_type"],
-                    env = env,
-                    policy_kwargs=policy_kwargs,
-                    device = 'cpu',  # 'cuda' 'cpu'
-                    verbose=0)  # verbose=2 for debugging
-        
     elif config["rl_alg"] == 'PPO':
         model = PPO(policy = config["policy_type"],
                     env = env,
-                    device = 'cpu',  # 'cuda' 'cpu'
-                    verbose=0)  # verbose=2 for debugging
-
-    elif config["rl_alg"] == 'lstmPPO':
-        model = RecurrentPPO(policy = "MlpLstmPolicy",
-                    env = env,
-                    device = 'cpu',  # 'cuda' 'cpu'
-                    verbose=0)  # verbose=2 for debugging
-
-    elif config["rl_alg"] == 'ARS':
-        model = ARS(policy = config["policy_type"],
-                    env = env,
-                    delta_std = 0.2,
-                    device = 'cpu',  # 'cuda' 'cpu'
-                    verbose=0)  # verbose=2 for debugging
-
-    elif config["rl_alg"] == 'SAC':
-        model = SAC(policy = config["policy_type"],
-                    # policy_kwargs=dict(n_critics=2, net_arch=[512, 512, 512]),
-                    env = env, 
-                    replay_buffer_class = HerReplayBuffer,
-                    replay_buffer_kwargs = dict(
-                        n_sampled_goal=6,
-                        goal_selection_strategy="future",  # 'episode', 'final', 'future'
-                    ), 
-                    # batch_size = 512,
-                    # buffer_size = 1000000,
-                    learning_starts = 100000,
-                    # learning_rate = 3e-4,
-                    # ent_coef = 0.15, # 'auto'
-                    gradient_steps = -1, # config["n_workers"],
-                    # train_freq = (1000, "step"), 
-                    device = 'cpu',  # 'cuda' 'cpu'
-                    verbose=1)  # verbose=2 for debugging
-
-    elif config["rl_alg"] == 'TD3':
-        n_actions = env.action_space.shape[-1]
-        action_noise = NormalActionNoise(mean=np.zeros(n_actions), sigma=0.2 * np.ones(n_actions))
-
-        model = TD3(policy = config["policy_type"],
-                    # policy_kwargs=dict(n_critics=2, net_arch=[512, 512, 512]),
-                    env = env,
-                    # replay_buffer_class = HerReplayBuffer,
-                    # replay_buffer_kwargs = dict(
-                    #     n_sampled_goal=4,
-                    #     goal_selection_strategy="future",  # 'episode', 'final', 'future'
-                    # ), 
-                    # batch_size = 512,
-                    # buffer_size = 1000000,
-                    learning_starts = 20000,
-                    action_noise = action_noise,
-                    # learning_rate = 3e-4,
-                    # ent_coef = 0.15, # 'auto'
-                    # gradient_steps = config["n_workers"],
-                    # train_freq = 1, 
+                    learning_rate = 0.000121136184813815, 
+                    n_steps = 512, 
+                    batch_size = 64, 
+                    n_epochs = 10, 
+                    gamma = 0.995, 
+                    gae_lambda = 0.98, 
+                    clip_range = 0.4, 
+                    ent_coef = 4.03008700396656E-08, 
+                    vf_coef = 0.000496796993945126, 
+                    max_grad_norm = 0.9, 
+                    policy_kwargs = dict(
+                        net_arch=dict(pi=[256, 256, 256], vf=[256, 256, 256]),
+                        activation_fn=nn.Tanh,
+                        ortho_init=False,
+                    ),
                     device = 'cpu',  # 'cuda' 'cpu'
                     verbose=0)  # verbose=2 for debugging
 
@@ -236,7 +171,7 @@ if __name__ == '__main__':
 
         # del and reload trained model 
         del model
-        model = A2C.load(f"{config['model_dir']}best_model", env=trained_eval_env, print_system_info=False)
+        model = PPO.load(f"{config['model_dir']}best_model", env=trained_eval_env, print_system_info=False)
 
         mean_reward, std_reward = evaluate_policy(model, trained_eval_env, n_eval_episodes=config["n_eval_eps"])
         print(f'Trained agent | Mean reward: {mean_reward} +/- {std_reward:.2f}')
