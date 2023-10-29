@@ -23,6 +23,7 @@ The following two tables list the best hyperparameters found during the tuning p
 | Layer size |	256	| 64	| 64	| 64 |
 | Gradient steps	| 256	| 4	| 128	| 16 |
 | Target update interval	| 5000	| 1	| 20k	| 15k |
+
 Table 1 Hyperparameters used to train DQN agents in each environment. Moore refers to the local observation version of the GBR v1, while CNN means Convolutional neural network, referring to the global observation version of that same environment.
 
 | PPO hyperparameters |	GBR v1	| GBR v2	| GPN |
@@ -41,6 +42,7 @@ Table 1 Hyperparameters used to train DQN agents in each environment. Moore refe
 | Layer size	| 256	| 256	| 256 |
 | Orthogonal Initialization	| Yes	| No	| Yes |
 | Value function coefficient	| 2.69e-06	| 4.97e-04	| 9.5e-04 |
+
 Table 2 Hyperparameters used to train PPO agents in each environment.
 
 ## Perlin Simplex Noise Parameters 
@@ -57,6 +59,7 @@ To reproduce the topographic conditions (introvert, linear, extrovert) used with
 | Amplitude	| 1	| 1	| 1 |
 | Initial value	| 0	| 0	| 1 |
 | Random seed	| 77	| 95	| 123 |
+
 Table 3 Perlin Simplex noise parameters used to generate the topographic conditions within the GPN environment.
 
 ## Dependencies
