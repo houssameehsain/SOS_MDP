@@ -1,9 +1,9 @@
 # SOS_MDP
  Deep reinforcement learning to solve self-organized settlement growth Markov decision processes. 
 <p float="left">
-  <img src="logs/gpnv0-ppo-episode-01.gif" width="300" />
-  <img src="logs/gpnv0-ppo-episode-02.gif" width="300" /> 
-  <img src="logs/gpnv0-ppo-episode-03.gif" width="300" />
+  <img src="logs/gpnv0-ppo-episode-01.gif" width="250" />
+  <img src="logs/gpnv0-ppo-episode-02.gif" width="250" /> 
+  <img src="logs/gpnv0-ppo-episode-03.gif" width="250" />
 </p>
 
 ## About this repository
