@@ -7,6 +7,58 @@ The repository comprises the training and hyperparameter tuning code for trainin
 
 All the RL environments found in the `envs.py` script are compatible with the OpenAI Gym convention, which is widely used within the RL community. This will ease the use of the implementation of the Beady Ring and Path Node environments in future research. The implementations could also be easily extended to incorporate more performance metrics and urban growth dynamics. The OpenAI Gym structure allows for training agents in these environments using various RL algorithms. 
 
+## Hyperparameters
+The following two tables list the best hyperparameters found during the tuning process for each environment that were used for training both the DQN and PPO agents. 
+
+| DQN hyperparameters	| GBR v1 (CNN)	| GBR v1 (Moore)	| GBR v2	| GPN |
+| :---         |     :---:      |     :---:      |     :---:      |     :---:      |
+| Batch size | 256 |	128 |	256 |	64 |
+| Buffer size |	10k	| 50k |	50k |	100k |
+| Exploration final rate |	3.76e-02 |	1.04e-03	| 4.48e-03 |	1.12e-02 |
+| Exploration fraction	| 1.3e-01	| 3.9e-02	| 6.91e-03	| 3.36e-03 |
+| Gamma |	0.999 |	0.999 |	0.99	| 0.99 |
+| Learning rate |	6.21e-04 |	8.09e-04 |	1.02e-04 |	3.99e-02 |
+| Learning starts	| 5000	| 0	| 5000	| 10k |
+| Number of layers |	3 |	1 |	1 |	2 |
+| Layer size |	256	| 64	| 64	| 64 |
+| Gradient steps	| 256	| 4	| 128	| 16 |
+| Target update interval	| 5000	| 1	| 20k	| 15k |
+Table 1 Hyperparameters used to train DQN agents in each environment. Moore refers to the local observation version of the GBR v1, while CNN means Convolutional neural network, referring to the global observation version of that same environment.
+
+| PPO hyperparameters |	GBR v1	| GBR v2	| GPN |
+| :---         |     :---:      |     :---:      |     :---:      |
+| Activation function	| ReLU	| Tanh	| Tanh |
+| Batch size	| 256	| 64	| 64 |
+| Clip range	| 0.3	| 0.4	| 0.4 |
+| Entropy coefficient	| 2.52e-07	| 4.03e-08	| 2.99e-07 |
+| GAE lambda	| 0.99	| 0.98	| 0.92 |
+| Gamma	| 0.99	| 0.995	| 0.999 |
+| Learning rate	| 1.26e-05	| 1.21e-04	| 1.04e-04 |
+| Max. gradient norm	| 0.9	| 0.9	| 0.3 |
+| Number of epochs	| 20	| 10	| 20 |
+| Number of steps	| 2048	| 512	| 256 |
+| Number of layers	| 2	| 3	| 2 |
+| Layer size	| 256	| 256	| 256 |
+| Orthogonal Initialization	| Yes	| No	| Yes |
+| Value function coefficient	| 2.69e-06	| 4.97e-04	| 9.5e-04 |
+Table 2 Hyperparameters used to train PPO agents in each environment.
+
+## Perlin Simplex Noise Parameters 
+To reproduce the topographic conditions (introvert, linear, extrovert) used within the GPN environment, the parameters to generate those conditions are as follows:
+| Perlin noise parameters	| Introvert	| Linear	| Extrovert |
+| :---         |     :---:      |     :---:      |     :---:      |
+| Starting location	| 50, 50 |	90, 90	| 50, 40 |
+| Scale	| 30	| 40	| 50 |
+| Octaves	| 3	| 2	| 2 |
+| Persistence	| 0.4	| 0.4	| 0.4 |
+| Lacunarity	| 2.0	| 2.0	| 1.0 |
+| Central flatness	| 0.5	| 0.5	| 0.5 |
+| Frequency	| 1	| 1	| 1 |
+| Amplitude	| 1	| 1	| 1 |
+| Initial value	| 0	| 0	| 1 |
+| Random seed	| 77	| 95	| 123 |
+Table 3 Perlin Simplex noise parameters used to generate the topographic conditions within the GPN environment.
+
 ## Dependencies
 We make use of Stable-Baselines3 (Raffin et al., 2021) implementations of the various RL algorithms (DQN, PPO, A2C) to ensure stable training results as well as the reproducibility of those results by others. The hyperparameter tuning process is performed using the Optuna (Akiba et al., 2019) implementation of Bayesian search over a predefined hyperparameter space. Make sure to install all the dependencies from the `requirements.txt` file.
 
