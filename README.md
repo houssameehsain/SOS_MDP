@@ -18,7 +18,7 @@ Self-organized modes of urban growth could result in high-quality urban space an
 ## Citing this work
 ```bibtex
 @thesis{hsain2023sosmdp,
-  title={Deep Reinforcement Learning for Urban Modeling: A Test Case on Self-Organized Settlement Morphogenesis Simulation},
+  title={Deep Reinforcement Learning for Urban Modeling: Morphogenesis Simulation of Self-Organized Settlements},
   author={Hsain, Houssame Eddine},
   department={Graduate School of Engineering and Science - Department of Architecture},
   university={Bilkent University},
