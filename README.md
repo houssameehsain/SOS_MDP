@@ -1,5 +1,10 @@
 # SOS_MDP
  Deep reinforcement learning to solve self-organized settlement growth Markov decision processes. 
+<p float="left">
+  <img src="logs/gpnv0-ppo-episode-01.gif" width="150" />
+  <img src="logs/gpnv0-ppo-episode-02.gif" width="150" /> 
+  <img src="logs/gpnv0-ppo-episode-03.gif" width="150" />
+</p>
 
 ## About this repository
 This repository contains source files for my MS thesis titled, "Deep reinforcement learning for urban modeling: A test case on self-organized settlement morphogenesis simulation", at Bilkent University.
