@@ -3,204 +3,164 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import json
+import glob
+import os
 
-
-# data 1
-f = open("./run_gpnv0_dqn_10_01/train/plots/performance_log.json")
-
-# "./logs/run_gbrv0_dqn_moore/train/plots/gbrv0_dqn_moore_09_train_plots_performance_log.json"
-
-json_obj = json.load(f)
-
-returns_1 = np.array(json_obj["returns"], dtype=np.float32)[:22087]
-eps_lens_1 = np.array(json_obj["eps_lengths"], dtype=np.float32)[:22087]
-print(len(returns_1)) 
-
-perf_1 = {
-    'episode': [i + 1 for i in range(len(returns_1))],
-    'return': returns_1,
-    'eps_len': eps_lens_1,
-}
-
-indices_1 = np.array([i + 1 for i in range(len(returns_1))], dtype=np.int32)
-
-perf_df_1 = pd.DataFrame(perf_1, index=indices_1)
-
-
-# data 2
-f = open("./run_gpnv0_ppo_10_01/train/plots/performance_log.json")
-json_obj = json.load(f)
-
-returns_2 = np.array(json_obj["returns"], dtype=np.float32)
-eps_lens_2 = np.array(json_obj["eps_lengths"], dtype=np.float32)
-print(len(returns_2))
-
-perf_2 = {
-    'episode': [i + 1 for i in range(len(returns_2))],
-    'return': returns_2,
-    'eps_len': eps_lens_2,
-}
-
-indices_2 = np.array([i + 1 for i in range(len(returns_2))], dtype=np.int32)
-
-perf_df_2 = pd.DataFrame(perf_2, index=indices_2)
-
-
+# Set up plot style
 sns.set()
 sns.set_theme(style="darkgrid")
 sns.set_context("paper")
+sns.set_style("whitegrid")
+plt.rcParams['grid.alpha'] = 0.3
 
-fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(9, 4))
+def load_and_process_data(log_path):
+    with open(log_path) as f:
+        json_obj = json.load(f)
+    
+    returns = np.array(json_obj["returns"], dtype=np.float32)
+    eps_lens = np.array(json_obj["eps_lengths"], dtype=np.float32)
+    
+    return returns, eps_lens
 
-# plot 1
-smooth = 100
-for metric in list(perf_1.keys()):
-    if metric == 'episode':
-        continue
-    else:
-        if metric == 'return':
-            color = 'b'
-            style = '-'
-            op = 1
-        else: 
-            continue
+def smooth_data(data, window=100):
+    """Smooth data using moving window average"""
+    if len(data) < window:
+        return data
+    y = np.ones(window)
+    z = np.ones(len(data))
+    smoothed = np.convolve(data, y, 'same') / np.convolve(z, y, 'same')
+    return smoothed
+
+# Set figure size for horizontal layout (A4 width)
+A4_WIDTH = 8.27
+GOLDEN_RATIO = 1.618
+fig_height = A4_WIDTH / GOLDEN_RATIO * 1.2  # Slightly taller to accommodate both rows
+
+# Create figure with 2 rows (returns/lengths) and 3 columns (environments)
+fig, axes = plt.subplots(2, 3, figsize=(A4_WIDTH, fig_height))
+fig.suptitle('Training Performance Across Environments', fontsize=11, y=1.02)
+
+# Define environments and algorithms
+envs = ['gbrv0', 'gbrv1', 'gpnv0']
+algos = ['dqn', 'ppo']
+colors = {'dqn': '#1f77b4', 'ppo': '#ff7f0e'}
+labels = {'dqn': 'DQN', 'ppo': 'PPO'}
+
+# Track min episodes across all environments for consistent x-axis
+min_episodes = float('inf')
+
+# First pass to find minimum episode length
+for env_idx, env in enumerate(envs):
+    env_min_episodes = float('inf')
+    for algo in algos:
+        pattern = f"./new_logs/run_{env}_{algo}*/train/plots/performance_log.json"
+        log_files = glob.glob(pattern)
         
-        if smooth > 1:
-            """
-            smooth data with moving window average.
-            that is,
-                smoothed_y[t] = average(y[t-k], y[t-k+1], ..., y[t+k-1], y[t+k])
-            where the "smooth" param is width of that window (2k+1)
-            """
-            y = np.ones(smooth)
-            x = np.asarray(perf_df_1[metric])
-            z = np.ones(len(x))
-            smoothed_x = np.convolve(x,y,'same') / np.convolve(z,y,'same')
+        if log_files:
+            for log_file in log_files:
+                try:
+                    returns, _ = load_and_process_data(log_file)
+                    env_min_episodes = min(env_min_episodes, len(returns))
+                except Exception as e:
+                    print(f"Error processing {log_file}: {e}")
+                    continue
+    
+    if env_min_episodes != float('inf'):
+        min_episodes = min(min_episodes, env_min_episodes)
 
-            # line plots
-            ax1.plot(perf_df_1["episode"], x, c=color, ls=style, alpha=0.15)
-            ax1.plot(perf_df_1["episode"], smoothed_x, c=color, ls=style, label="DQN", alpha=op)
-
-        else:
-            # line plot
-            ax1.plot(perf_df_1["episode"], perf_df_1[metric], 'b-', label='value', alpha=1)
-
-# plot 2
-smooth = 100
-for metric in list(perf_2.keys()):
-    if metric == 'episode':
-        continue
-    else:
-        if metric == 'return':
-            color = 'orange'
-            style = '-'
-            op = 1
-        else: 
-            continue
+# Plot for each environment
+for env_idx, env in enumerate(envs):
+    col = env_idx  # Column index (0, 1, 2) for each environment
+    
+    for algo in algos:
+        pattern = f"./new_logs/run_{env}_{algo}*/train/plots/performance_log.json"
+        log_files = glob.glob(pattern)
         
-        if smooth > 1:
-            """
-            smooth data with moving window average.
-            that is,
-                smoothed_y[t] = average(y[t-k], y[t-k+1], ..., y[t+k-1], y[t+k])
-            where the "smooth" param is width of that window (2k+1)
-            """
-            y = np.ones(smooth)
-            x = np.asarray(perf_df_2[metric])
-            z = np.ones(len(x))
-            smoothed_x = np.convolve(x,y,'same') / np.convolve(z,y,'same')
-
-            # line plots
-            ax1.plot(perf_df_2["episode"], x, c=color, ls=style, alpha=0.15)
-            ax1.plot(perf_df_2["episode"], smoothed_x, c=color, ls=style, label="PPO", alpha=op)
-
-            # if multi runs, can use this to display a 0.95 confidence interval
-            # plt.fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
-        else:
-            # line plot
-            ax1.plot(perf_df_2["episode"], perf_df_2[metric], 'b-', label='value', alpha=1)
-
-# plot 3
-smooth = 100
-for metric in list(perf_1.keys()):
-    if metric == 'episode':
-        continue
-    else:
-        if metric == 'eps_len':
-            color = 'b'
-            style = '-'
-            op = 1
-        else: 
+        if not log_files:
+            print(f"No log files found for {env} {algo}")
             continue
+            
+        all_returns = []
+        all_eps_lens = []
         
-        if smooth > 1:
-            """
-            smooth data with moving window average.
-            that is,
-                smoothed_y[t] = average(y[t-k], y[t-k+1], ..., y[t+k-1], y[t+k])
-            where the "smooth" param is width of that window (2k+1)
-            """
-            y = np.ones(smooth)
-            x = np.asarray(perf_df_1[metric])
-            z = np.ones(len(x))
-            smoothed_x = np.convolve(x,y,'same') / np.convolve(z,y,'same')
-
-            # line plots
-            ax2.plot(perf_df_1["episode"], x, c=color, ls=style, alpha=0.15)
-            ax2.plot(perf_df_1["episode"], smoothed_x, c=color, ls=style, label="DQN", alpha=op)
-
-        else:
-            # line plot
-            ax2.plot(perf_df_1["episode"], perf_df_1[metric], 'b-', label='value', alpha=1)
-
-# plot 4
-smooth = 100
-for metric in list(perf_2.keys()):
-    if metric == 'episode':
-        continue
-    else:
-        if metric == 'eps_len':
-            color = 'orange'
-            style = '-'
-            op = 1
-        else: 
+        for log_file in log_files:
+            try:
+                returns, eps_lens = load_and_process_data(log_file)
+                # Truncate to minimum episodes
+                returns = returns[:min_episodes]
+                eps_lens = eps_lens[:min_episodes]
+                all_returns.append(returns)
+                all_eps_lens.append(eps_lens)
+            except Exception as e:
+                print(f"Error processing {log_file}: {e}")
+                continue
+        
+        if not all_returns:
             continue
+            
+        # Convert to numpy arrays
+        all_returns = np.array(all_returns)
+        all_eps_lens = np.array(all_eps_lens)
         
-        if smooth > 1:
-            """
-            smooth data with moving window average.
-            that is,
-                smoothed_y[t] = average(y[t-k], y[t-k+1], ..., y[t+k-1], y[t+k])
-            where the "smooth" param is width of that window (2k+1)
-            """
-            y = np.ones(smooth)
-            x = np.asarray(perf_df_2[metric])
-            z = np.ones(len(x))
-            smoothed_x = np.convolve(x,y,'same') / np.convolve(z,y,'same')
+        # Calculate statistics
+        mean_returns = np.mean(all_returns, axis=0)
+        min_returns = np.min(all_returns, axis=0)
+        max_returns = np.max(all_returns, axis=0)
+        mean_eps_lens = np.mean(all_eps_lens, axis=0)
+        min_eps_lens = np.min(all_eps_lens, axis=0)
+        max_eps_lens = np.max(all_eps_lens, axis=0)
+        
+        # Apply smoothing
+        smoothed_returns = smooth_data(mean_returns)
+        smoothed_min_returns = smooth_data(min_returns)
+        smoothed_max_returns = smooth_data(max_returns)
+        smoothed_eps_lens = smooth_data(mean_eps_lens)
+        smoothed_min_eps_lens = smooth_data(min_eps_lens)
+        smoothed_max_eps_lens = smooth_data(max_eps_lens)
+        
+        # Create episode numbers
+        episodes = np.arange(1, len(mean_returns) + 1)
+        
+        # Plot returns on top row
+        axes[0, col].fill_between(episodes, 
+                                smoothed_min_returns,
+                                smoothed_max_returns,
+                                color=colors[algo], alpha=0.1)
+        axes[0, col].plot(episodes, smoothed_returns, 
+                         color=colors[algo], label=labels[algo])
+        
+        # Plot episode lengths on bottom row
+        axes[1, col].fill_between(episodes,
+                                smoothed_min_eps_lens,
+                                smoothed_max_eps_lens,
+                                color=colors[algo], alpha=0.1)
+        axes[1, col].plot(episodes, smoothed_eps_lens,
+                         color=colors[algo], label=labels[algo])
 
-            # line plots
-            ax2.plot(perf_df_2["episode"], x, c=color, ls=style, alpha=0.15)
-            ax2.plot(perf_df_2["episode"], smoothed_x, c=color, ls=style, label="PPO", alpha=op)
+# Update titles and labels
+env_titles = ['Beady Ring v1', 'Beady Ring v2', 'Path Node v1']
+for i, title in enumerate(env_titles):
+    axes[0, i].set_title(title, fontsize=10, pad=8)
+    axes[0, i].tick_params(labelsize=9)
+    axes[1, i].tick_params(labelsize=9)
+    axes[1, i].set_xlabel('Episode', fontsize=9)
 
-            # if multi runs, can use this to display a 0.95 confidence interval
-            # plt.fill_between(x, mean_1 - std_1, mean_1 + std_1, color='b', alpha=0.2)
-        else:
-            # line plot
-            ax2.plot(perf_df_2["episode"], perf_df_2[metric], 'b-', label='value', alpha=1)
+# Add y-axis labels
+for i in range(3):
+    if i == 0:  # Only add y-labels to leftmost plots
+        axes[0, i].set_ylabel('Average Return', fontsize=9)
+        axes[1, i].set_ylabel('Average Episode Length', fontsize=9)
 
+# Update legend
+handles, labels = axes[0, 0].get_legend_handles_labels()
+fig.legend(handles, labels, loc='upper right', bbox_to_anchor=(0.99, 1.02),
+          ncol=2, fontsize=9, frameon=True)
 
-handles, labels = ax1.get_legend_handles_labels()
-fig.legend(handles, labels, bbox_to_anchor=(0.8, 1), loc='upper center', ncol=4)
-# plt.legend()
+# Adjust spacing
+plt.tight_layout()
+plt.subplots_adjust(top=0.90, hspace=0.3, wspace=0.25)
 
-ax1.set_xlabel('Episode')
-ax1.set_ylabel('Average Cummulative Reward')
-
-ax2.set_xlabel('Episode')
-ax2.set_ylabel('Average Episode Length')
-
-plt.suptitle('GPN Environment', fontsize=12, fontweight='bold')
-
-# plt.show()
-plt.savefig(fname="./gpnv0_dqn_ppo.png", dpi=300)
+# Save figure
+plt.savefig("training_comparison.png", dpi=300, bbox_inches='tight', pad_inches=0.2)
+plt.close()
 
